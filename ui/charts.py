@@ -34,7 +34,7 @@ def create_network_chart(download_data, upload_data):
             show_labels=False
         ),
         min_y=0,
-        max_y=10,
+        max_y=100,
         expand=True,
     )
 

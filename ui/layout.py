@@ -29,7 +29,7 @@ def create_main_layout(chart, speed_label):
             [
                 header,
                 # Espacio para el texto de velocidad
-                ft.Container(speed_label, padding=5),
+                ft.Container(speed_label, padding=ft.padding.only(top=5, bottom=25)),
                 # Espacio para el grafico
                 ft.Container(
                     content=chart,
@@ -38,9 +38,9 @@ def create_main_layout(chart, speed_label):
                     border_radius=10,
                     bgcolor=ft.Colors.BLACK_12
                 ),
-                ft.Text("Status: Modular System Active | Scale: 2.5MB Fixed", size=12, color="grey")
+                ft.Text("Status: Modular System Active", size=12, color="grey")
             ],
-            spacing=10
+            spacing=0
         ),
         padding=10,
         border=ft.Border.all(1, ft.Colors.with_opacity(0.1, ft.Colors.WHITE)),
