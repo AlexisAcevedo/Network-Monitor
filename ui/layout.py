@@ -1,50 +1,27 @@
 import flet as ft
 
-def setup_page(page: ft.Page):
-    """Cofiguracion global de la ventana"""
+def setup_page (page: ft.Page):
+    """Configuracion basica de la ventana"""
     page.title = "Network Monitor"
     page.theme_mode = ft.ThemeMode.DARK
-    page.width = 800
-    page.height = 600
-    page.padding = 20
+    page.window.width = 1000
+    page.window.height = 700
+    page.padding = 0
 
-def create_main_layout(chart, speed_label):
+def create_app_shell(sidebar, content_area):
     """
-    Ensambla la pantalla principal.
-    Recibe los widgets activos (chart y label) y los coloca en el diseño
+    Crea el layout principal usando una Fila (Row)
+    [ Sidebar | Linea divisoria | Area de contenido ]
     """
-
-    # Encabezado
-    header = ft.Row(
+    return ft.Row(
         [
-            ft.Icon(ft.Icons.NETWORK_CHECK, color ="green", size=30),
-            ft.Text("NETWORK MONITOR", size=22, weight="bold")
+            sidebar,
+            ft.VerticalDivider(width=1, color="grey"),
+            ft.Container(
+                content=content_area,
+                expand=True,
+                padding=20
+            )
         ],
-        alignment=ft.MainAxisAlignment.START
+        expand=True
     )
-
-    # Contenedor principal
-    layout = ft.Container(
-        content=ft.Column(
-            [
-                header,
-                # Espacio para el texto de velocidad
-                ft.Container(speed_label, padding=ft.padding.only(top=5, bottom=25)),
-                # Espacio para el grafico
-                ft.Container(
-                    content=chart,
-                    height=400,
-                    padding=10,
-                    border_radius=10,
-                    bgcolor=ft.Colors.BLACK_12
-                ),
-                ft.Text("Status: Modular System Active", size=12, color="grey")
-            ],
-            spacing=0
-        ),
-        padding=10,
-        border=ft.Border.all(1, ft.Colors.with_opacity(0.1, ft.Colors.WHITE)),
-        border_radius=15
-    )
-
-    return layout

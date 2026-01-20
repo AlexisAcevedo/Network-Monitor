@@ -1,55 +1,77 @@
 import flet as ft
 import asyncio
 
+# --- 1. SERVICIOS (BACKEND) ---
 from core.sensor import NetworkSensor
 from core.data_manager import DataManager
-from ui.layout import setup_page, create_main_layout
+from core.scanner import NetworkScanner
+
+# --- 2. COMPONENTES UI ---
+from ui.layout import setup_page, create_app_shell
+from ui.sidebar import create_sidebar
 from ui.charts import create_network_chart
 
+# --- 3. VISTAS (PANTALLAS) ---
+from ui.views.monitor_view import MonitorView
+from ui.views.scanner_view import ScannerView
+
 async def main(page: ft.Page):
-    # 1. Configuración Visual
+    # A) Configuración inicial
     setup_page(page)
     
-    # 2. Inicialización de logica
+    # B) Instanciar Backend
     sensor = NetworkSensor()
     data_manager = DataManager()
+    scanner_service = NetworkScanner()
 
-    # 3. Creación de UI
-    # Conectamos las listas del Manager al Gráfico
+    # C) Preparar componentes para la Vista Monitor
+    # (El gráfico vive en el main para que podamos actualizarlo en el bucle)
     chart = create_network_chart(data_manager.download_points, data_manager.upload_points)
+    speed_label = ft.Text("Initializing...", size=30, weight="bold", font_family="Consolas")
+
+    # D) Instanciar las Vistas
+    # Vista 1: Monitor (Le pasamos el gráfico y el label para que los muestre)
+    view_monitor = MonitorView(chart, speed_label)
     
-    speed_label = ft.Text("Initializing sensors...", size=25, weight="bold", font_family="Consolas")
+    # Vista 2: Escáner (Le pasamos el servicio de escaneo y la página)
+    view_scanner = ScannerView(scanner_service, page)
 
-    # Ensamblamos la pantalla
-    layout = create_main_layout(chart, speed_label)
-    page.add(layout)
-
-    # 4. Bucle Principal (Controlador)
-    while True:
-        await asyncio.sleep(1)
-
-        # A) Obtener datos crudos (MB)
-        download_mb, upload_mb = sensor.get_traffic()
-
-        # B) Procesar datos (Actualizar listas y calcular escala)
-        data_manager.update_traffic(download_mb, upload_mb)
-        new_scale = data_manager.calculate_dynamic_scale(download_mb, upload_mb)
-
-        # C) Actualizar UI
-        
-        # Texto: Reconvertimos a bytes para usar el formateador bonito
-        bytes_download = download_mb * 1048576
-        bytes_upload = upload_mb * 1048576
-        
-        speed_label.value = (
-            f"⬇️ {sensor.format_bytes(bytes_download)}/s   "
-            f"⬆️ {sensor.format_bytes(bytes_upload)}/s"
-        )
-        
-        # Gráfico: Solo tocamos la escala, los puntos ya se actualizaron en el paso B
-        chart.max_y = new_scale
-        
+    # E) Lógica de Navegación
+    def nav_change(e):
+        index = e.control.selected_index
+        # Simplemente prendemos y apagamos la visibilidad
+        view_monitor.visible = (index == 0)
+        view_scanner.visible = (index == 1)
         page.update()
 
+    # Crear el menú lateral
+    sidebar = create_sidebar(nav_change)
+
+    # F) Ensamblaje Final
+    # Metemos las dos vistas en el área de contenido. Solo una se verá a la vez.
+    content_area = ft.Column([view_monitor, view_scanner])
+    
+    layout = create_app_shell(sidebar, content_area)
+    page.add(layout)
+
+    # G) Bucle Principal (Ciclo de Vida)
+    while True:
+        await asyncio.sleep(1)
+        
+        # 1. Obtener datos nuevos
+        down, up = sensor.get_traffic()
+        data_manager.update_traffic(down, up)
+        
+        # 2. Actualizar UI (Solo si estamos viendo el monitor)
+        # Esto ahorra recursos, aunque calculamos los datos igual para no perder historial
+        if view_monitor.visible:
+            new_scale = data_manager.calculate_dynamic_scale(down, up)
+            bytes_down = down * 1048576
+            bytes_up = up * 1048576
+            
+            # Actualizamos textos y gráfico
+            speed_label.value = f"⬇️ {sensor.format_bytes(bytes_down)}/s   ⬆️ {sensor.format_bytes(bytes_up)}/s"
+            chart.max_y = new_scale
+            page.update()
 
 ft.run(main)

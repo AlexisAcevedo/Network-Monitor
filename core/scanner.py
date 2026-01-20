@@ -44,7 +44,7 @@ class NetworkScanner:
             arp_request_broadcast = broadcast / arp_request
             
             # 4. Enviar y esperar respuesta
-            # timeout=1: Espera solo 1 segundo para no congelar la pantalla
+            # Espera solo 1 segundo (timeout) para no congelar la pantalla
             answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
             
             clients_list = []
