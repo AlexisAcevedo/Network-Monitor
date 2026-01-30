@@ -16,6 +16,9 @@ env/
 .vscode/
 .idea/
 
+# Agent Configuration
+.agent/
+
 # Distribution / Packaging
 dist/
 build/
