@@ -12,12 +12,12 @@ env/
 # Environment Variables
 .env
 
+# Agent folder
+.agent
+
 # IDEs
 .vscode/
 .idea/
-
-# Agent Configuration
-.agent/
 
 # Distribution / Packaging
 dist/
@@ -26,3 +26,14 @@ build/
 
 # Logs
 *.log
+
+# Testing / Coverage
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.hypothesis/
+
+# OS
+.DS_Store
+Thumbs.db

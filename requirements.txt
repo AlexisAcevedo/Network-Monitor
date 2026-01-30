@@ -1,6 +1,7 @@
 flet
 psutil
 scapy
+requests>=2.31.0
 
 # Testing
 pytest>=8.0.0

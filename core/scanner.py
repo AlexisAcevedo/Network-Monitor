@@ -2,11 +2,14 @@ from asyncio import timeout
 from _socket import socket
 import scapy.all as scapy
 import socket
+from core.mac_vendor import MacVendorService
 
 class NetworkScanner:
     def __init__(self):
         # Intentamos detectar nuestra IP local y el rango (ej: 192.168.1.1/24)
         self.target_ip = self.get_local_range()
+        # Servicio para detectar fabricantes de dispositivos
+        self.vendor_service = MacVendorService()
 
     def get_local_range(self):
         """Detecta la IP de nuestra PC y calcula el rango de la red local"""
@@ -50,7 +53,12 @@ class NetworkScanner:
             clients_list = []
             for element in answered_list:
                 # element[1] es el paquete de respuesta (p.answer)
-                client_dict = {"ip": element[1].psrc, "mac": element[1].hwsrc}
+                mac_address = element[1].hwsrc
+                client_dict = {
+                    "ip": element[1].psrc, 
+                    "mac": mac_address,
+                    "vendor": self.vendor_service.get_vendor(mac_address)
+                }
                 clients_list.append(client_dict)
                 
             return clients_list

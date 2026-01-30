@@ -37,11 +37,16 @@ async def main(page: ft.Page):
     view_scanner = ScannerView(scanner_service, page)
 
     # E) Lógica de Navegación
-    def nav_change(e):
+    async def nav_change(e):
         index = e.control.selected_index
         # Simplemente prendemos y apagamos la visibilidad
         view_monitor.visible = (index == 0)
         view_scanner.visible = (index == 1)
+        
+        # Si entramos a la vista de escáner, ejecutar escaneo automático
+        if index == 1:
+            await view_scanner.run_scan(None)
+        
         page.update()
 
     # Crear el menú lateral

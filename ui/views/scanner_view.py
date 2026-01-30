@@ -55,6 +55,7 @@ class ScannerView(ft.Column):
                     ft.DataRow(cells=[
                         ft.DataCell(ft.Text(dev['ip'])),
                         ft.DataCell(ft.Text(dev['mac'], font_family="Consolas")),
+                        ft.DataCell(ft.Text(dev.get('vendor', 'Unknown'), size=12)),
                         ft.DataCell(ft.Icon(ft.Icons.CIRCLE, color="green", size=10)),
                     ])
                 )
