@@ -13,6 +13,13 @@ class DataManager:
         # Usamos deque para que los datos viejos se borren solos.
         self.download_values = deque([0]*60, maxlen=60)
         self.upload_values = deque([0]*60, maxlen=60)
+        
+        # 3. ESTADÍSTICAS DE TRÁFICO
+        self.peak_download = 0.0
+        self.peak_upload = 0.0
+        self.total_download = 0.0
+        self.total_upload = 0.0
+        self.sample_count = 0
 
     def update_traffic(self, download_mb, upload_mb):
         """
@@ -29,6 +36,13 @@ class DataManager:
 
         for point, value in zip(self.upload_points, self.upload_values):
             point.y = value
+        
+        # C) Actualizar estadísticas
+        self.peak_download = max(self.peak_download, download_mb)
+        self.peak_upload = max(self.peak_upload, upload_mb)
+        self.total_download += download_mb
+        self.total_upload += upload_mb
+        self.sample_count += 1
 
     def calculate_dynamic_scale(self, download_mb, upload_mb):
         """
@@ -47,3 +61,29 @@ class DataManager:
             # Si pasamos los 100 MB, subimos de a 5 en 5.
             # Ejemplo: 102 MB -> Techo 110 MB (105 + 5 de margen)
             return (math.ceil(max_val / 5) * 5) + 5
+    
+    def get_stats(self):
+        """
+        Retorna diccionario con estadísticas de tráfico.
+        """
+        avg_download = self.total_download / self.sample_count if self.sample_count > 0 else 0.0
+        avg_upload = self.total_upload / self.sample_count if self.sample_count > 0 else 0.0
+        
+        return {
+            "peak_download": self.peak_download,
+            "peak_upload": self.peak_upload,
+            "total_download": self.total_download,
+            "total_upload": self.total_upload,
+            "avg_download": avg_download,
+            "avg_upload": avg_upload
+        }
+    
+    def reset_stats(self):
+        """
+        Reinicia todas las estadísticas a cero.
+        """
+        self.peak_download = 0.0
+        self.peak_upload = 0.0
+        self.total_download = 0.0
+        self.total_upload = 0.0
+        self.sample_count = 0

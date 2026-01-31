@@ -10,6 +10,8 @@ class NetworkScanner:
         self.target_ip = self.get_local_range()
         # Servicio para detectar fabricantes de dispositivos
         self.vendor_service = MacVendorService()
+        # Set de MACs conocidas para detectar nuevos dispositivos
+        self.known_devices = set()
 
     def get_local_range(self):
         """Detecta la IP de nuestra PC y calcula el rango de la red local"""
@@ -19,43 +21,39 @@ class NetworkScanner:
             s.connect(("8.8.8.8", 80))
             local_ip = s.getsockname()[0]
             s.close()
-
-            # Cortamos el ultimo numero y agregamos .1/24 para escanera toda la subred
-            # Ejemplo: Si tu IP es 192.168.0.45 -> Rango: 192.168.0.1/24
-            base_ip = ".".join(local_ip.split(".")[:-1]) + ".1/24"
-            return base_ip
-        except:
-            # Fallback por si falla la deteccion automatica
-            return "192.168.1.1/24"
-
+            
+            # Calculamos el rango (ej: 192.168.1.1 -> 192.168.1.1/24)
+            ip_parts = local_ip.split(".")
+            network_range = f"{ip_parts[0]}.{ip_parts[1]}.{ip_parts[2]}.1/24"
+            return network_range
+        except Exception as e:
+            print(f"Error detecting local IP: {e}")
+            return "192.168.1.1/24"  # Fallback por defecto
+    
     def scan_network(self):
         """
-        Envía peticiones ARP a toda la red.
+        Escanea la red local usando ARP y retorna lista de dispositivos
         """
-        print(f"Scanning target: {self.target_ip}...") # Debug
-        
         try:
-            # DEFINICIÓN DE PAQUETES
+            print(f"Scanning target: {self.target_ip}...")
             
-            # 1. ARP Request: ¿Quién tiene esta IP?
+            # 1. Crear paquete ARP
             arp_request = scapy.ARP(pdst=self.target_ip)
-            
-            # 2. Ethernet Frame: Broadcast a todos (FF:FF:FF...)
             broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
-            
-            # 3. FUSIÓN
             arp_request_broadcast = broadcast / arp_request
             
-            # 4. Enviar y esperar respuesta
+            # 2. Enviar y recibir respuestas
             # Espera solo 1 segundo (timeout) para no congelar la pantalla
             answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
             
+            # 3. Procesar resultados
             clients_list = []
             for element in answered_list:
                 # element[1] es el paquete de respuesta (p.answer)
+                ip_address = element[1].psrc
                 mac_address = element[1].hwsrc
                 client_dict = {
-                    "ip": element[1].psrc, 
+                    "ip": ip_address,
                     "mac": mac_address,
                     "vendor": self.vendor_service.get_vendor(mac_address)
                 }
@@ -66,3 +64,23 @@ class NetworkScanner:
         except Exception as e:
             print(f"Error scanning: {e}")
             return []
+    
+    def detect_new_devices(self, current_scan: list) -> list:
+        """
+        Detecta dispositivos nuevos comparando con dispositivos conocidos.
+        
+        Args:
+            current_scan: Lista de dispositivos del escaneo actual
+            
+        Returns:
+            Lista de dispositivos nuevos (no vistos antes)
+        """
+        new_devices = []
+        
+        for device in current_scan:
+            mac = device.get('mac')
+            if mac and mac not in self.known_devices:
+                new_devices.append(device)
+                self.known_devices.add(mac)
+        
+        return new_devices

@@ -5,6 +5,7 @@ import asyncio
 from core.sensor import NetworkSensor
 from core.data_manager import DataManager
 from core.scanner import NetworkScanner
+from core.notification_service import NotificationService
 
 # --- 2. COMPONENTES UI ---
 from ui.layout import setup_page, create_app_shell
@@ -12,7 +13,7 @@ from ui.sidebar import create_sidebar
 from ui.charts import create_network_chart
 
 # --- 3. VISTAS (PANTALLAS) ---
-from ui.views.monitor_view import MonitorView
+from ui.views.monitor_view import MonitorView, create_stats_panel
 from ui.views.scanner_view import ScannerView
 
 async def main(page: ft.Page):
@@ -23,18 +24,20 @@ async def main(page: ft.Page):
     sensor = NetworkSensor()
     data_manager = DataManager()
     scanner_service = NetworkScanner()
+    notification_service = NotificationService()
 
     # C) Preparar componentes para la Vista Monitor
     # (El gráfico vive en el main para que podamos actualizarlo en el bucle)
     chart = create_network_chart(data_manager.download_points, data_manager.upload_points)
     speed_label = ft.Text("Initializing...", size=30, weight="bold", font_family="Consolas")
+    stats_panel, peak_text, total_text, avg_text = create_stats_panel()
 
     # D) Instanciar las Vistas
-    # Vista 1: Monitor (Le pasamos el gráfico y el label para que los muestre)
-    view_monitor = MonitorView(chart, speed_label)
+    # Vista 1: Monitor (Le pasamos el gráfico, el label y el panel de stats)
+    view_monitor = MonitorView(chart, speed_label, stats_panel)
     
-    # Vista 2: Escáner (Le pasamos el servicio de escaneo y la página)
-    view_scanner = ScannerView(scanner_service, page)
+    # Vista 2: Escáner (Le pasamos el servicio de escaneo, la página y notificaciones)
+    view_scanner = ScannerView(scanner_service, page, notification_service)
 
     # E) Lógica de Navegación
     async def nav_change(e):
@@ -77,6 +80,13 @@ async def main(page: ft.Page):
             # Actualizamos textos y gráfico
             speed_label.value = f"⬇️ {sensor.format_bytes(bytes_down)}/s   ⬆️ {sensor.format_bytes(bytes_up)}/s"
             chart.max_y = new_scale
+            
+            # Actualizar estadísticas
+            stats = data_manager.get_stats()
+            peak_text.value = f"Peak: {stats['peak_download']:.2f} MB/s ⬇️ | {stats['peak_upload']:.2f} MB/s ⬆️"
+            total_text.value = f"Total: {stats['total_download']:.2f} MB ⬇️ | {stats['total_upload']:.2f} MB ⬆️"
+            avg_text.value = f"Avg: {stats['avg_download']:.2f} MB/s ⬇️ | {stats['avg_upload']:.2f} MB/s ⬆️"
+            
             page.update()
 
 ft.run(main)

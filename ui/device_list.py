@@ -7,7 +7,7 @@ def create_device_table():
     """
     return ft.DataTable(
         columns=[
-            ft.DataColumn(ft.Text("IP Adress", weight="bold", color="white")),
+            ft.DataColumn(ft.Text("IP Address", weight="bold", color="white")),
             ft.DataColumn(ft.Text("MAC Address", weight="bold", color="cyan")),
             ft.DataColumn(ft.Text("Vendor", weight="bold", color="orange")),
             ft.DataColumn(ft.Text("Status", weight="bold")),
