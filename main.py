@@ -13,7 +13,7 @@ from ui.sidebar import create_sidebar
 from ui.charts import create_network_chart
 
 # --- 3. VISTAS (PANTALLAS) ---
-from ui.views.monitor_view import MonitorView, create_stats_panel
+from ui.views.monitor_view import MonitorView, create_stats_panel, create_alerts_config
 from ui.views.scanner_view import ScannerView
 
 async def main(page: ft.Page):
@@ -31,10 +31,11 @@ async def main(page: ft.Page):
     chart = create_network_chart(data_manager.download_points, data_manager.upload_points)
     speed_label = ft.Text("Initializing...", size=30, weight="bold", font_family="Consolas")
     stats_panel, peak_text, total_text, avg_text = create_stats_panel()
+    alerts_config, alerts_toggle, threshold_field = create_alerts_config(data_manager)
 
     # D) Instanciar las Vistas
-    # Vista 1: Monitor (Le pasamos el gráfico, el label y el panel de stats)
-    view_monitor = MonitorView(chart, speed_label, stats_panel)
+    # Vista 1: Monitor (Le pasamos el gráfico, el label, el panel de stats y alerts)
+    view_monitor = MonitorView(chart, speed_label, stats_panel, alerts_config)
     
     # Vista 2: Escáner (Le pasamos el servicio de escaneo, la página y notificaciones)
     view_scanner = ScannerView(scanner_service, page, notification_service)
@@ -85,7 +86,12 @@ async def main(page: ft.Page):
             stats = data_manager.get_stats()
             peak_text.value = f"Peak: {stats['peak_download']:.2f} MB/s ⬇️ | {stats['peak_upload']:.2f} MB/s ⬆️"
             total_text.value = f"Total: {stats['total_download']:.2f} MB ⬇️ | {stats['total_upload']:.2f} MB ⬆️"
-            avg_text.value = f"Avg: {stats['avg_download']:.2f} MB/s ⬇️ | {stats['avg_upload']:.2f} MB/s ⬆️"
+            avg_text.value = f"Avg: {stats['avg_download']:.2f} MB/s ⬇️ | {stats['avg_upload']:.2f} MB ⬆️"
+            
+            # Verificar tráfico alto y notificar
+            if data_manager.check_high_traffic(down, up):
+                max_traffic = max(down, up)
+                notification_service.notify_high_traffic(max_traffic, data_manager.traffic_threshold_mb)
             
             page.update()
 

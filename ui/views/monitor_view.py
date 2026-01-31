@@ -1,9 +1,9 @@
 import flet as ft
 
-def MonitorView(chart, speed_label, stats_panel):
+def MonitorView(chart, speed_label, stats_panel, alerts_config):
     """
     Crea la vista del Monitor de trafico.
-    Recibe los componentes ya creados (chart, label y stats) para organizarlos visualmente
+    Recibe los componentes ya creados (chart, label, stats y alerts) para organizarlos visualmente
     """
     return ft.Column(
         [
@@ -24,7 +24,13 @@ def MonitorView(chart, speed_label, stats_panel):
             # Panel de estadísticas
             ft.Container(
                 content=stats_panel,
-                padding=ft.padding.only(top=20)
+                padding=ft.padding.only(top=20, bottom=10)
+            ),
+            
+            # Configuración de alertas
+            ft.Container(
+                content=alerts_config,
+                padding=ft.padding.only(top=10)
             ),
         ],
         visible=True # Esta vista arranca visible
@@ -33,7 +39,7 @@ def MonitorView(chart, speed_label, stats_panel):
 
 def create_stats_panel():
     """
-    Crea el panel de estadísticas con 4 métricas.
+    Crea el panel de estadísticas con 3 métricas.
     Retorna el panel y los controles de texto para actualizar.
     """
     # Textos que se actualizarán
@@ -84,3 +90,35 @@ def create_stats_panel():
     )
     
     return panel, peak_text, total_text, avg_text
+
+
+def create_alerts_config(data_manager):
+    """
+    Crea el panel de configuración de alertas de tráfico alto.
+    Retorna el panel y los controles.
+    """
+    # Toggle para habilitar/deshabilitar alertas
+    alerts_toggle = ft.Switch(
+        label="High traffic alerts",
+        value=False,
+        on_change=lambda e: setattr(data_manager, 'high_traffic_alerts_enabled', e.control.value)
+    )
+    
+    # Campo de texto para configurar umbral
+    threshold_field = ft.TextField(
+        label="Threshold (MB/s)",
+        value="10.0",
+        width=150,
+        on_submit=lambda e: data_manager.set_traffic_threshold(float(e.control.value) if e.control.value else 10.0)
+    )
+    
+    # Panel
+    panel = ft.Row(
+        [
+            alerts_toggle,
+            threshold_field,
+        ],
+        spacing=20
+    )
+    
+    return panel, alerts_toggle, threshold_field

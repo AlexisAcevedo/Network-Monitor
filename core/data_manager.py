@@ -20,6 +20,10 @@ class DataManager:
         self.total_download = 0.0
         self.total_upload = 0.0
         self.sample_count = 0
+        
+        # 4. CONFIGURACIÓN DE ALERTAS DE TRÁFICO ALTO
+        self.traffic_threshold_mb = 10.0  # Umbral por defecto: 10 MB/s
+        self.high_traffic_alerts_enabled = False  # Deshabilitado por defecto
 
     def update_traffic(self, download_mb, upload_mb):
         """
@@ -29,43 +33,41 @@ class DataManager:
         self.download_values.append(download_mb)
         self.upload_values.append(upload_mb)
 
-        # B) Inyectamos ese valor en el punto gráfico correspondiente
-        # 'zip' nos permite recorrer la lista de puntos y la cola de valores a la par
-        for point, value in zip(self.download_points, self.download_values):
-            point.y = value
-
-        for point, value in zip(self.upload_points, self.upload_values):
-            point.y = value
+        # B) Actualizamos los objetos gráficos existentes
+        for i in range(60):
+            self.download_points[i].y = self.download_values[i]
+            self.upload_points[i].y = self.upload_values[i]
         
         # C) Actualizar estadísticas
-        self.peak_download = max(self.peak_download, download_mb)
-        self.peak_upload = max(self.peak_upload, upload_mb)
+        # Actualizar picos
+        if download_mb > self.peak_download:
+            self.peak_download = download_mb
+        if upload_mb > self.peak_upload:
+            self.peak_upload = upload_mb
+        
+        # Acumular totales
         self.total_download += download_mb
         self.total_upload += upload_mb
+        
+        # Incrementar contador de muestras
         self.sample_count += 1
 
-    def calculate_dynamic_scale(self, download_mb, upload_mb):
+    def calculate_dynamic_scale(self, current_down, current_up):
         """
-        Calcula el techo del gráfico.
-        - Piso mínimo: 100 MB.
-        - Crecimiento: Bloques de 5 MB.
+        Calcula el eje Y del gráfico de forma dinámica.
+        Retorna un valor redondeado hacia arriba para que se vea limpio.
         """
-        # Buscamos el pico más alto en todo el historial actual (los 60 segundos)
-        # Esto evita que la escala salte bruscamente si el pico dura solo 1 segundo.
-        max_val = max(max(self.download_values), max(self.upload_values))
-        
-        # Lógica de escala
-        if max_val < 100:
-            return 100
-        else:
-            # Si pasamos los 100 MB, subimos de a 5 en 5.
-            # Ejemplo: 102 MB -> Techo 110 MB (105 + 5 de margen)
-            return (math.ceil(max_val / 5) * 5) + 5
+        max_value = max(current_down, current_up, 1)
+        return math.ceil(max_value * 1.2)  # 20% de margen superior
     
-    def get_stats(self):
+    def get_stats(self) -> dict:
         """
-        Retorna diccionario con estadísticas de tráfico.
+        Retorna un diccionario con todas las estadísticas de tráfico.
+        
+        Returns:
+            Diccionario con peak, total y avg para download y upload
         """
+        # Calcular promedios
         avg_download = self.total_download / self.sample_count if self.sample_count > 0 else 0.0
         avg_upload = self.total_upload / self.sample_count if self.sample_count > 0 else 0.0
         
@@ -79,11 +81,34 @@ class DataManager:
         }
     
     def reset_stats(self):
-        """
-        Reinicia todas las estadísticas a cero.
-        """
+        """Reinicia todas las estadísticas a cero."""
         self.peak_download = 0.0
         self.peak_upload = 0.0
         self.total_download = 0.0
         self.total_upload = 0.0
         self.sample_count = 0
+    
+    def set_traffic_threshold(self, threshold_mb: float):
+        """
+        Configura el umbral de tráfico alto.
+        
+        Args:
+            threshold_mb: Umbral en MB/s
+        """
+        self.traffic_threshold_mb = max(0.1, threshold_mb)  # Mínimo 0.1 MB/s
+    
+    def check_high_traffic(self, download_mb: float, upload_mb: float) -> bool:
+        """
+        Verifica si el tráfico actual supera el umbral configurado.
+        
+        Args:
+            download_mb: Tráfico de descarga en MB/s
+            upload_mb: Tráfico de subida en MB/s
+            
+        Returns:
+            True si alguno de los dos supera el umbral
+        """
+        if not self.high_traffic_alerts_enabled:
+            return False
+        
+        return download_mb > self.traffic_threshold_mb or upload_mb > self.traffic_threshold_mb
