@@ -7,8 +7,11 @@ Aplicación de escritorio moderna construida con Python y Flet para monitorear e
 ## Características Principales
 
 -   **Monitor de Tráfico en Tiempo Real**: Visualiza la velocidad de descarga y subida con gráficos dinámicos.
+-   **Speedtest Integrado**: Mide tu velocidad real de internet (bajada, subida y ping) usando servidores cercanos.
+-   **Dashboard de Topología**: Mapa visual interactivo de tu red que clasifica dispositivos automáticamente (PC, Móvil, Router, etc.).
+-   **Escáner de Puertos Avanzado**: Analiza dispositivos conectador para detectar puertos abiertos (Modos: Quick, Standard, Full).
 -   **Escáner de Dispositivos**: Identifica dispositivos conectados a tu red local (IP y MAC) mediante escaneo ARP.
--   **Interfaz Moderna**: UI limpia y responsiva con modo oscuro.
+-   **Interfaz Moderna**: UI limpia y responsiva con modo oscuro, barra lateral y notificaciones.
 
 ## Requisitos Previos
 
@@ -39,7 +42,9 @@ python main.py
 ### Navegación
 
 -   **Monitor**: Pestaña principal que muestra el gráfico de tráfico.
--   **Escáner**: Pestaña para buscar dispositivos en la red. Haga clic en el botón flotante para iniciar un escaneo.
+-   **Escáner**: Buscador de dispositivos y escáner de puertos.
+-   **Topología**: Visualización gráfica de la red en árbol.
+-   **Speedtest**: Test de velocidad de internet.
 
 ## Estructura del Proyecto
 
@@ -48,9 +53,12 @@ Monitor de Red/
 ├── core/               # Lógica de negocio (Backend)
 │   ├── sensor.py       # Lectura de tráfico (psutil)
 │   ├── scanner.py      # Escaneo de red (scapy)
+│   ├── speedtest_service.py # Servicio Speedtest
+│   ├── device_classifier.py # Clasificación de dispositivos
+│   ├── port_scanner.py # Escáner de puertos
 │   └── data_manager.py # Gestión de datos
 ├── ui/                 # Interfaz de Usuario (Frontend)
-│   ├── views/          # Pantallas (Monitor, Scanner)
+│   ├── views/          # Pantallas (Monitor, Scanner, Speedtest, Topology)
 │   ├── charts.py       # Componente de gráfico
 │   ├── sidebar.py      # Menú lateral
 │   └── layout.py       # Estructura base de la app
