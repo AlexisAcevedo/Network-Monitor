@@ -27,6 +27,12 @@ def create_sidebar(on_nav_change):
                 selected_icon=ft.Icons.DEVICES,
                 label="Devices"
             ),
+            # Opcion 2: Speedtest
+            ft.NavigationRailDestination(
+                icon=ft.Icons.SPEED,
+                selected_icon=ft.Icons.SPEED,
+                label="Speedtest"
+            ),
         ],
         on_change=on_nav_change # Aca se conecta la logica
     )

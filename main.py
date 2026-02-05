@@ -15,6 +15,7 @@ from ui.charts import create_network_chart
 # --- 3. VISTAS (PANTALLAS) ---
 from ui.views.monitor_view import MonitorView, create_stats_panel, create_alerts_config
 from ui.views.scanner_view import ScannerView
+from ui.views.speedtest_view import SpeedtestView
 
 async def main(page: ft.Page):
     # A) Configuración inicial
@@ -39,6 +40,9 @@ async def main(page: ft.Page):
     
     # Vista 2: Escáner (Le pasamos el servicio de escaneo, la página y notificaciones)
     view_scanner = ScannerView(scanner_service, page, notification_service)
+    
+    # Vista 3: Speedtest
+    view_speedtest = SpeedtestView(page)
 
     # E) Lógica de Navegación
     async def nav_change(e):
@@ -46,6 +50,7 @@ async def main(page: ft.Page):
         # Simplemente prendemos y apagamos la visibilidad
         view_monitor.visible = (index == 0)
         view_scanner.visible = (index == 1)
+        view_speedtest.visible = (index == 2)
         
         # Si entramos a la vista de escáner, ejecutar escaneo automático
         if index == 1:
@@ -57,8 +62,8 @@ async def main(page: ft.Page):
     sidebar = create_sidebar(nav_change)
 
     # F) Ensamblaje Final
-    # Metemos las dos vistas en el área de contenido. Solo una se verá a la vez.
-    content_area = ft.Column([view_monitor, view_scanner])
+    # Metemos las tres vistas en el área de contenido. Solo una se verá a la vez.
+    content_area = ft.Column([view_monitor, view_scanner, view_speedtest])
     
     layout = create_app_shell(sidebar, content_area)
     page.add(layout)
