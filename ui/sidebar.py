@@ -27,7 +27,13 @@ def create_sidebar(on_nav_change):
                 selected_icon=ft.Icons.DEVICES,
                 label="Devices"
             ),
-            # Opcion 2: Speedtest
+            # Opcion 2: Topologia
+            ft.NavigationRailDestination(
+                icon=ft.Icons.MAP,  # Icono de mapa/topología
+                selected_icon=ft.Icons.MAP_SHARP,
+                label="Topology"
+            ),
+            # Opcion 3: Speedtest
             ft.NavigationRailDestination(
                 icon=ft.Icons.SPEED,
                 selected_icon=ft.Icons.SPEED,

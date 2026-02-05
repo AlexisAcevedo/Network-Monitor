@@ -16,6 +16,7 @@ from ui.charts import create_network_chart
 from ui.views.monitor_view import MonitorView, create_stats_panel, create_alerts_config
 from ui.views.scanner_view import ScannerView
 from ui.views.speedtest_view import SpeedtestView
+from ui.views.topology_view import TopologyView
 
 async def main(page: ft.Page):
     # A) Configuración inicial
@@ -35,13 +36,17 @@ async def main(page: ft.Page):
     alerts_config, alerts_toggle, threshold_field = create_alerts_config(data_manager)
 
     # D) Instanciar las Vistas
-    # Vista 1: Monitor (Le pasamos el gráfico, el label, el panel de stats y alerts)
+    # Vista 1: Monitor
     view_monitor = MonitorView(chart, speed_label, stats_panel, alerts_config)
     
-    # Vista 2: Escáner (Le pasamos el servicio de escaneo, la página y notificaciones)
+    # Vista 2: Escáner
     view_scanner = ScannerView(scanner_service, page, notification_service)
     
-    # Vista 3: Speedtest
+    # Vista 3: Topología (Nueva)
+    # Vista 3: Topología (Nueva)
+    view_topology, refresh_topology = TopologyView(scanner_service, page)
+    
+    # Vista 4: Speedtest
     view_speedtest = SpeedtestView(page)
 
     # E) Lógica de Navegación
@@ -50,11 +55,16 @@ async def main(page: ft.Page):
         # Simplemente prendemos y apagamos la visibilidad
         view_monitor.visible = (index == 0)
         view_scanner.visible = (index == 1)
-        view_speedtest.visible = (index == 2)
+        view_topology.visible = (index == 2)
+        view_speedtest.visible = (index == 3)
         
         # Si entramos a la vista de escáner, ejecutar escaneo automático
         if index == 1:
             await view_scanner.run_scan(None)
+            
+        # Si entramos a topología, cargar topología autmáticamente
+        if index == 2:
+            refresh_topology()
         
         page.update()
 
@@ -62,8 +72,8 @@ async def main(page: ft.Page):
     sidebar = create_sidebar(nav_change)
 
     # F) Ensamblaje Final
-    # Metemos las tres vistas en el área de contenido. Solo una se verá a la vez.
-    content_area = ft.Column([view_monitor, view_scanner, view_speedtest])
+    # Metemos las cuatro vistas en el área de contenido.
+    content_area = ft.Column([view_monitor, view_scanner, view_topology, view_speedtest])
     
     layout = create_app_shell(sidebar, content_area)
     page.add(layout)
