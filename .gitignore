@@ -12,8 +12,6 @@ env/
 # Environment Variables
 .env
 
-# Agent folder
-.agent
 
 # IDEs
 .vscode/
